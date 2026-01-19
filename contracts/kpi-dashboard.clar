@@ -74,12 +74,12 @@
 )
 
 (define-public (update-kpi-value (metric-id uint) (value uint))
-  (let ((kpi (map-get? kpi-metrics { metric-id: metric-id })))
-    (if (is-some kpi)
-      (let ((current (unwrap-panic kpi)))
-        (begin
-          (asserts! (is-eq tx-sender CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
-          (let ((status (if (>= value (get target-value current)) "on-target" "below-target")))
+  (if (is-eq tx-sender CONTRACT-OWNER)
+    (let ((kpi (map-get? kpi-metrics { metric-id: metric-id })))
+      (if (is-some kpi)
+        (let ((current (unwrap-panic kpi))
+              (status (if (>= value (get target-value current)) "on-target" "below-target")))
+          (begin
             (map-set kpi-metrics
               { metric-id: metric-id }
               (merge current {
@@ -88,12 +88,13 @@
                 status: status
               })
             )
+            (ok true)
           )
-          (ok true)
         )
+        (err ERR-NOT-FOUND)
       )
-      (err ERR-NOT-FOUND)
     )
+    (err ERR-NOT-AUTHORIZED)
   )
 )
 
